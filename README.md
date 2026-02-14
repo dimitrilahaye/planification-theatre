@@ -8,7 +8,7 @@ Application web pour organiser les représentations théâtrales de plusieurs cl
 
 - **Classes** : créer des classes (niveau, instituteur, liste d’élèves). Import possible au format texte (une ou plusieurs classes séparées par `---`).
 - **Vagues** : chaque classe est organisée en 4 vagues (A, B, C, D), à des créneaux horaires configurables. L’application attribue automatiquement une vague à chaque élève en évitant les conflits pour les fratries.
-- **Fratries** : propositions par nom de famille (ex. Dupont / Dupont Aignan) et création manuelle en sélectionnant les enfants dans un quadrillage par classe. Les fratries enregistrées sont prises en compte dans le planning.
+- **Fratries** : propositions par nom de famille (au moins un mot en commun, ex. Martin, Martin Dubois, Dubois Martin, Lefebvre Martin Dubois) et création manuelle en sélectionnant les enfants dans un quadrillage par classe. Les fratries enregistrées sont prises en compte dans le planning.
 - **Horaires** : configuration des créneaux par vague (time pickers), puis génération du planning par classe avec rappel des fratries et surlignage au survol.
 
 ## Stack

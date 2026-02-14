@@ -305,9 +305,60 @@ function bindClassEditor(block, cls, isMulti) {
 
 }
 
-/** Nom normalisé pour regroupement fratrie : premier mot du nom de famille ("Dupont Aignan" → "dupont"). */
-function getFamilyKey(lastName) {
-  return (lastName || '').trim().split(/\s+/)[0].toLowerCase() || '';
+/** Extrait l'ensemble des mots du nom de famille (minuscules). */
+function getLastNameWords(lastName) {
+  return new Set((lastName || '').trim().split(/\s+/).map((w) => w.toLowerCase()).filter(Boolean));
+}
+
+/**
+ * Regroupe les élèves qui partagent au moins un mot dans leur nom de famille
+ * (ordre ignoré). Union-Find pour les relations transitives (ex. Martin/Martin Dubois,
+ * Dubois Martin Lefebvre, Lefebvre Martin Dubois → même groupe).
+ */
+function computeProposedFamilies(allStudents) {
+  const wordToIndices = new Map();
+  for (let i = 0; i < allStudents.length; i++) {
+    const words = getLastNameWords(allStudents[i].lastName);
+    for (const w of words) {
+      if (!wordToIndices.has(w)) wordToIndices.set(w, []);
+      wordToIndices.get(w).push(i);
+    }
+  }
+
+  const parent = allStudents.map((_, i) => i);
+  const find = (i) => {
+    if (parent[i] !== i) parent[i] = find(parent[i]);
+    return parent[i];
+  };
+  const union = (i, j) => {
+    const pi = find(i), pj = find(j);
+    if (pi !== pj) parent[pi] = pj;
+  };
+
+  for (const indices of wordToIndices.values()) {
+    for (let k = 1; k < indices.length; k++) union(indices[0], indices[k]);
+  }
+
+  const byRoot = new Map();
+  for (let i = 0; i < allStudents.length; i++) {
+    const r = find(i);
+    if (!byRoot.has(r)) byRoot.set(r, []);
+    byRoot.get(r).push(allStudents[i]);
+  }
+  return [...byRoot.values()].filter((list) => list.length >= 2);
+}
+
+function getFamilyLabel(students) {
+  const sets = students.map((s) => getLastNameWords(s.lastName));
+  const intersection = sets.reduce((acc, s) => {
+    if (acc === null) return new Set(s);
+    return new Set([...acc].filter((w) => s.has(w)));
+  }, null);
+  if (intersection && intersection.size > 0) {
+    return [...intersection].sort()[0];
+  }
+  const first = (students[0].lastName || '').trim().split(/\s+/)[0];
+  return first || 'Famille';
 }
 
 function renderSiblingsView(container, state) {
@@ -322,14 +373,7 @@ function renderSiblingsView(container, state) {
     }))
   );
 
-  const byFamily = new Map();
-  for (const s of allStudents) {
-    const key = getFamilyKey(s.lastName);
-    if (!key) continue;
-    if (!byFamily.has(key)) byFamily.set(key, []);
-    byFamily.get(key).push(s);
-  }
-  const proposedFamilies = [...byFamily.entries()].filter(([, list]) => list.length >= 2);
+  const proposedFamilies = computeProposedFamilies(allStudents);
   const hasProposed = proposedFamilies.length > 0;
 
   const proposalIdsMatchGroup = (proposalIds, group) => {
@@ -342,16 +386,16 @@ function renderSiblingsView(container, state) {
     ? `
     <div class="card siblings-section-card">
       <h3>Propositions de fratries</h3>
-      <p class="muted mb-2">Fratries proposées par nom de famille (même nom ou premier mot, ex. Dupont / Dupont Aignan). Validez en un clic.</p>
+      <p class="muted mb-2">Fratries proposées par nom de famille (au moins un mot en commun, ex. Martin, Martin Dubois, Dubois Martin, Lefebvre Martin Dubois). Validez en un clic.</p>
       <div class="siblings-proposal-blocks">
         ${proposedFamilies
           .map(
-            ([key, students]) => {
+            (students) => {
               const studentIds = students.map((s) => s.id);
               const alreadyAccepted = (siblingGroups || []).some((g) => proposalIdsMatchGroup(studentIds, g));
               return `
           <div class="siblings-proposal-block ${alreadyAccepted ? 'siblings-proposal-block--accepted' : ''}">
-            <h4 class="siblings-block-header">Famille ${escapeHtml((students[0].lastName || '').trim().split(/\s+/)[0] || key)}</h4>
+            <h4 class="siblings-block-header">Famille ${escapeHtml(getFamilyLabel(students))}</h4>
             <div class="siblings-block-list">
               ${students.map((s) => `<span class="sibling-name-pill">${escapeHtml(s.lastName)} ${escapeHtml(s.firstName)} — ${escapeHtml(s.niveau)}, ${escapeHtml(s.teacherName)}</span>`).join('')}
             </div>
