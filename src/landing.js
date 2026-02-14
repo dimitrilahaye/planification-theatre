@@ -9,7 +9,7 @@ export function renderLandingPage(container, { onGoToApp } = {}) {
           qui permet aux parents d'assister à <strong>toutes</strong> les représentations
           de leurs enfants — sans chevauchement.
         </p>
-        <a href="#/app" class="landing-cta">Accéder à l'application</a>
+        <a href="#/classes" class="landing-cta">Accéder à l'application</a>
       </header>
 
       <div class="landing-columns">
@@ -50,7 +50,7 @@ export function renderLandingPage(container, { onGoToApp } = {}) {
       </div>
 
       <section class="landing-section landing-cta-section">
-        <a href="#/app" class="landing-cta landing-cta-secondary">Commencer la planification</a>
+        <a href="#/classes" class="landing-cta landing-cta-secondary">Commencer la planification</a>
       </section>
     </div>
   `;
@@ -61,7 +61,7 @@ export function renderLandingPage(container, { onGoToApp } = {}) {
       if (typeof onGoToApp === 'function') {
         onGoToApp();
       } else {
-        window.location.hash = '#/app';
+        window.location.hash = '#/classes';
       }
     });
   });

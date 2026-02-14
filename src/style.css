@@ -29,7 +29,71 @@ body {
 #app {
   max-width: 900px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 0 1.5rem 1.5rem;
+  min-height: 100vh;
+}
+
+.app-main {
+  padding-top: 1rem;
+}
+
+/* Header application */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 0;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.app-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+}
+.app-header-logo:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+.app-header-logo-icon {
+  display: flex;
+  color: var(--accent);
+}
+.app-header-logo-icon svg {
+  display: block;
+}
+.app-header-nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.app-header-link {
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.app-header-link:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+  text-decoration: none;
+}
+.app-header-link.active {
+  color: var(--surface);
+  background: var(--accent);
+}
+.app-header-link.active:hover {
+  color: var(--surface);
 }
 
 /* Landing page */

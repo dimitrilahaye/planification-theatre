@@ -3,8 +3,7 @@ import { createClass, createStudent, getStudentById, getClassById, parseClassesB
 import { assignWavesToStudents, applyWaveAssignment } from './scheduler.js';
 import { getRoute, ROUTES, initRouter } from './router.js';
 import { renderLandingPage } from './landing.js';
-
-const VIEWS = { classes: 'classes', siblings: 'siblings', schedule: 'schedule' };
+import { renderAppHeader } from './header.js';
 
 function render() {
   const route = getRoute();
@@ -14,42 +13,35 @@ function render() {
   if (route === ROUTES.landing) {
     renderLandingPage(app, {
       onGoToApp: () => {
-        window.location.hash = '#/app';
+        window.location.hash = '#/classes';
         render();
       },
     });
     return;
   }
 
-  document.title = 'Planification théâtre — Application';
   const state = getState();
-  const view = state.currentView || VIEWS.classes;
   const editingClassId = state.editingClassId || null;
+  const editingClassIds = state.editingClassIds ?? [];
+
+  const titles = {
+    [ROUTES.classes]: 'Classes',
+    [ROUTES.siblings]: 'Fratries',
+    [ROUTES.schedule]: 'Horaires',
+  };
+  document.title = `Planification théâtre — ${titles[route] || 'Application'}`;
 
   app.innerHTML = `
-    <h1>Représentations théâtre — Planification</h1>
-    <nav>
-      <a href="#/">Accueil</a>
-      <a href="#" data-view="classes" data-active="${view === VIEWS.classes}">Classes</a>
-      <a href="#" data-view="siblings" data-active="${view === VIEWS.siblings}">Fratries</a>
-      <a href="#" data-view="schedule" data-active="${view === VIEWS.schedule}">Horaires</a>
-    </nav>
-    <main id="main-content"></main>
+    <div id="app-header"></div>
+    <main id="main-content" class="app-main"></main>
   `;
 
-  app.querySelector('nav').addEventListener('click', (e) => {
-    const a = e.target.closest('a[data-view]');
-    if (!a) return;
-    e.preventDefault();
-    setState((s) => ({ ...s, currentView: a.dataset.view }));
-    render();
-  });
+  renderAppHeader(app.querySelector('#app-header'), route);
 
   const main = document.getElementById('main-content');
-  const editingClassIds = state.editingClassIds ?? [];
-  if (view === VIEWS.classes) renderClassesView(main, state, editingClassId, editingClassIds);
-  else if (view === VIEWS.siblings) renderSiblingsView(main, state);
-  else if (view === VIEWS.schedule) renderScheduleView(main, state);
+  if (route === ROUTES.classes) renderClassesView(main, state, editingClassId, editingClassIds);
+  else if (route === ROUTES.siblings) renderSiblingsView(main, state);
+  else if (route === ROUTES.schedule) renderScheduleView(main, state);
 }
 
 function renderClassesView(container, state, editingClassId, editingClassIds) {
@@ -793,7 +785,6 @@ function formatScheduleAsText(classes) {
 // Init state shape if missing
 setState((s) => ({
   ...s,
-  currentView: s.currentView ?? VIEWS.classes,
   editingClassId: s.editingClassId ?? null,
 }));
 

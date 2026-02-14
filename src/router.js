@@ -1,19 +1,21 @@
 /**
- * Routeur hash simple : #/ (landing) et #/app (application)
+ * Routeur hash : #/ (landing), #/classes, #/siblings, #/schedule
  */
-export const ROUTES = { landing: 'landing', app: 'app' };
+export const ROUTES = { landing: 'landing', classes: 'classes', siblings: 'siblings', schedule: 'schedule' };
+
+const VALID_ROUTES = new Set(Object.values(ROUTES));
 
 export function getRoute() {
-  const hash = (window.location.hash || '#/').slice(1).replace(/^\/+/, '');
-  if (hash === 'app' || hash.startsWith('app/')) return ROUTES.app;
-  return ROUTES.landing;
+  const hash = (window.location.hash || '#/').slice(1).replace(/^\/+/, '').split('/')[0];
+  if (hash === 'app') return ROUTES.classes; // rétrocompat
+  return VALID_ROUTES.has(hash) ? hash : ROUTES.landing;
 }
 
 export function navigateTo(route) {
-  if (route === ROUTES.app) {
-    window.location.hash = '#/app';
-  } else {
+  if (route === ROUTES.landing) {
     window.location.hash = '#/';
+  } else if (VALID_ROUTES.has(route)) {
+    window.location.hash = `#/${route}`;
   }
 }
 
