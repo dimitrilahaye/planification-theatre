@@ -12,7 +12,12 @@ function render() {
   if (!app) return;
 
   if (route === ROUTES.landing) {
-    renderLandingPage(app);
+    renderLandingPage(app, {
+      onGoToApp: () => {
+        window.location.hash = '#/app';
+        render();
+      },
+    });
     return;
   }
 

@@ -1,4 +1,4 @@
-export function renderLandingPage(container) {
+export function renderLandingPage(container, { onGoToApp } = {}) {
   document.title = 'Planification théâtre';
   container.innerHTML = `
     <div class="landing">
@@ -55,8 +55,14 @@ export function renderLandingPage(container) {
     </div>
   `;
 
-  const appUrl = `${window.location.pathname.replace(/\/$/, '')}#/app`;
   container.querySelectorAll('.landing-cta').forEach((a) => {
-    a.href = appUrl;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (typeof onGoToApp === 'function') {
+        onGoToApp();
+      } else {
+        window.location.hash = '#/app';
+      }
+    });
   });
 }
