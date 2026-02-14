@@ -1,7 +1,7 @@
 /**
  * Header avec logo et navigation (Classes, Fratries, Horaires)
  */
-import { ROUTES } from './router.js';
+import { ROUTES, getHashHref } from './router.js';
 
 const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
   <!-- 4 vagues / créneaux (A,B,C,D) évoquant le planning -->
@@ -14,16 +14,20 @@ const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" wi
 </svg>`;
 
 export function renderAppHeader(container, currentRoute) {
+  const homeHref = getHashHref(ROUTES.landing);
+  const classesHref = getHashHref(ROUTES.classes);
+  const siblingsHref = getHashHref(ROUTES.siblings);
+  const scheduleHref = getHashHref(ROUTES.schedule);
   container.innerHTML = `
     <header class="app-header">
-      <a href="#/" class="app-header-logo" title="Accueil">
+      <a href="${homeHref}" class="app-header-logo" title="Accueil">
         <span class="app-header-logo-icon">${LOGO_SVG}</span>
         <span class="app-header-logo-text">Planification théâtre</span>
       </a>
       <nav class="app-header-nav">
-        <a href="#/classes" class="app-header-link${currentRoute === ROUTES.classes ? ' active' : ''}">Classes</a>
-        <a href="#/siblings" class="app-header-link${currentRoute === ROUTES.siblings ? ' active' : ''}">Fratries</a>
-        <a href="#/schedule" class="app-header-link${currentRoute === ROUTES.schedule ? ' active' : ''}">Horaires</a>
+        <a href="${classesHref}" class="app-header-link${currentRoute === ROUTES.classes ? ' active' : ''}">Classes</a>
+        <a href="${siblingsHref}" class="app-header-link${currentRoute === ROUTES.siblings ? ' active' : ''}">Fratries</a>
+        <a href="${scheduleHref}" class="app-header-link${currentRoute === ROUTES.schedule ? ' active' : ''}">Horaires</a>
       </nav>
     </header>
   `;

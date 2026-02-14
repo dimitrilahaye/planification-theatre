@@ -1,5 +1,8 @@
+import { ROUTES, getHashHref } from './router.js';
+
 export function renderLandingPage(container, { onGoToApp } = {}) {
   document.title = 'Planification théâtre';
+  const classesHref = getHashHref(ROUTES.classes);
   container.innerHTML = `
     <div class="landing">
       <header class="landing-hero">
@@ -9,7 +12,7 @@ export function renderLandingPage(container, { onGoToApp } = {}) {
           qui permet aux parents d'assister à <strong>toutes</strong> les représentations
           de leurs enfants — sans chevauchement.
         </p>
-        <a href="#/classes" class="landing-cta">Accéder à l'application</a>
+        <a href="${classesHref}" class="landing-cta">Accéder à l'application</a>
       </header>
 
       <div class="landing-columns">
@@ -50,7 +53,7 @@ export function renderLandingPage(container, { onGoToApp } = {}) {
       </div>
 
       <section class="landing-section landing-cta-section">
-        <a href="#/classes" class="landing-cta landing-cta-secondary">Commencer la planification</a>
+        <a href="${classesHref}" class="landing-cta landing-cta-secondary">Commencer la planification</a>
       </section>
     </div>
   `;
@@ -60,8 +63,6 @@ export function renderLandingPage(container, { onGoToApp } = {}) {
       e.preventDefault();
       if (typeof onGoToApp === 'function') {
         onGoToApp();
-      } else {
-        window.location.hash = '#/classes';
       }
     });
   });

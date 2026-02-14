@@ -1,7 +1,7 @@
 import { getState, setState, nextId } from './store.js';
 import { createClass, createStudent, getStudentById, getClassById, parseClassesBatchFromText } from './data-model.js';
 import { assignWavesToStudents, applyWaveAssignment } from './scheduler.js';
-import { getRoute, ROUTES, initRouter } from './router.js';
+import { getRoute, ROUTES, initRouter, navigateTo } from './router.js';
 import { renderLandingPage } from './landing.js';
 import { renderAppHeader } from './header.js';
 
@@ -12,10 +12,7 @@ function render() {
 
   if (route === ROUTES.landing) {
     renderLandingPage(app, {
-      onGoToApp: () => {
-        window.location.hash = '#/classes';
-        render();
-      },
+      onGoToApp: () => navigateTo(ROUTES.classes),
     });
     return;
   }
