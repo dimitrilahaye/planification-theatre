@@ -805,7 +805,7 @@ function renderScheduleView(container, state) {
       const idx = parseInt(el.dataset.fratrieIdx, 10);
       setState((s) => {
         const prev = s.selectedFratrieIds ?? [];
-        const next = prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx];
+        const next = prev.includes(idx) ? [] : [idx];
         return { ...s, selectedFratrieIds: next };
       });
       render();
