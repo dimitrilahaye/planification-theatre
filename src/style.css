@@ -73,6 +73,15 @@ body {
   filter: brightness(1.1);
   text-decoration: none;
 }
+.landing-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  .landing-columns { grid-template-columns: 1fr; }
+}
 .landing-section {
   padding: 2rem 0;
 }

@@ -1,5 +1,3 @@
-import { navigateTo, ROUTES } from './router.js';
-
 export function renderLandingPage(container) {
   document.title = 'Planification théâtre';
   container.innerHTML = `
@@ -14,22 +12,23 @@ export function renderLandingPage(container) {
         <a href="#/app" class="landing-cta">Accéder à l'application</a>
       </header>
 
-      <section class="landing-section">
-        <h2>Pourquoi ?</h2>
-        <p class="landing-lead">
-          Lors des fêtes de fin d'année, chaque classe présente son spectacle à tour de rôle.
-          Les parents ayant plusieurs enfants dans différentes classes se retrouvent face à un
-          casse-tête : plusieurs représentations en même temps, des choix impossibles.
-        </p>
-        <p>
-          Cette application résout le problème : elle attribue automatiquement chaque élève à
-          une vague (A, B, C ou D) en s'assurant que les fratries passent à des créneaux
-          différents. Les parents peuvent ainsi assister à toutes les représentations.
-        </p>
-      </section>
+      <div class="landing-columns">
+        <section class="landing-section">
+          <h2>Pourquoi ?</h2>
+          <p class="landing-lead">
+            Lors des fêtes de fin d'année, chaque classe présente son spectacle à tour de rôle.
+            Les parents ayant plusieurs enfants dans différentes classes se retrouvent face à un
+            casse-tête : plusieurs représentations en même temps, des choix impossibles.
+          </p>
+          <p>
+            Cette application résout le problème : elle attribue automatiquement chaque élève à
+            une vague (A, B, C ou D) en s'assurant que les fratries passent à des créneaux
+            différents. Les parents peuvent ainsi assister à toutes les représentations.
+          </p>
+        </section>
 
-      <section class="landing-section">
-        <h2>Comment ça marche ?</h2>
+        <section class="landing-section">
+          <h2>Comment ça marche ?</h2>
         <ol class="landing-steps">
           <li>
             <strong>Classes</strong> — Créez vos classes (CP, CE1, CE2…), instituteur(trice), liste d'élèves.
@@ -47,7 +46,8 @@ export function renderLandingPage(container) {
             <strong>Planning</strong> — Vous obtenez un planning par classe, prêt à diffuser aux parents.
           </li>
         </ol>
-      </section>
+        </section>
+      </div>
 
       <section class="landing-section landing-cta-section">
         <a href="#/app" class="landing-cta landing-cta-secondary">Commencer la planification</a>
@@ -55,10 +55,8 @@ export function renderLandingPage(container) {
     </div>
   `;
 
+  const appUrl = `${window.location.pathname.replace(/\/$/, '')}#/app`;
   container.querySelectorAll('.landing-cta').forEach((a) => {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      navigateTo(ROUTES.app);
-    });
+    a.href = appUrl;
   });
 }
