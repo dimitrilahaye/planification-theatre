@@ -4,7 +4,7 @@
 export const ROUTES = { landing: 'landing', app: 'app' };
 
 export function getRoute() {
-  const hash = (window.location.hash || '#/').slice(1);
+  const hash = (window.location.hash || '#/').slice(1).replace(/^\/+/, '');
   if (hash === 'app' || hash.startsWith('app/')) return ROUTES.app;
   return ROUTES.landing;
 }
