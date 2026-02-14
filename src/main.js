@@ -564,9 +564,11 @@ function renderSiblingsView(container, state) {
             })
             .filter(Boolean);
           return `
-        <div class="sibling-group flex align-center wrap gap-2">
-          ${names.map((n) => `<span class="name">${escapeHtml(n)}</span>`).join('')}
-          <button type="button" class="danger remove-sibling" data-group-idx="${idx}">Supprimer la fratrie</button>
+        <div class="sibling-group-card">
+          <div class="sibling-group flex align-center wrap gap-2">
+            ${names.map((n) => `<span class="name">${escapeHtml(n)}</span>`).join('')}
+            <button type="button" class="danger remove-sibling" data-group-idx="${idx}">Supprimer</button>
+          </div>
         </div>
       `;
         }
