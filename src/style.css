@@ -368,6 +368,13 @@ ul.plain {
   background: var(--accent);
   color: var(--surface);
 }
+.schedule-fratrie-badge.selected {
+  background: var(--accent);
+  color: var(--surface);
+}
+.schedule-fratrie-badge.selected:hover {
+  filter: brightness(1.1);
+}
 
 .schedule-student { transition: background 0.15s ease; }
 .schedule-student.fratrie-highlight {

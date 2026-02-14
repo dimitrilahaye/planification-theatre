@@ -716,6 +716,8 @@ function renderScheduleView(container, state) {
     return { label, ids: group };
   });
 
+  const selectedFratrieIds = state.selectedFratrieIds ?? [];
+
   const renderStudentCell = (students) => {
     if (!students.length) return '—';
     return students
@@ -729,7 +731,7 @@ function renderScheduleView(container, state) {
       ${noWaveBlock}
       ${scheduleIncomplete ? `<p class="mb-2" style="color: var(--accent);">${escapeHtml(incompleteMessage)}</p>` : studentsWithoutWave.length === 0 ? '<p class="muted mb-2">Chaque vague a un créneau horaire ; les élèves ont été répartis pour que les fratries ne passent pas en même temps.</p>' : ''}
       ${fratrieLabels.length > 0 ? `
-      <p class="mb-2 muted">Fratries : <span class="schedule-fratrie-list">${fratrieLabels.map((f, i) => `<span class="schedule-fratrie-badge" data-fratrie-ids="${f.ids.join(',')}" title="Survoler pour voir les enfants dans le planning">Famille ${escapeHtml(f.label)}</span>`).join(', ')}</span></p>
+      <p class="mb-2 muted">Fratries : <span class="schedule-fratrie-list">${fratrieLabels.map((f, i) => `<span class="schedule-fratrie-badge ${selectedFratrieIds.includes(i) ? 'selected' : ''}" data-fratrie-ids="${f.ids.join(',')}" data-fratrie-idx="${i}" title="Cliquer pour sélectionner/désélectionner. Survoler pour voir.">Famille ${escapeHtml(f.label)}</span>`).join(', ')}</span></p>
       ` : ''}
       <table class="schedule-table">
         <thead>
@@ -786,7 +788,28 @@ function renderScheduleView(container, state) {
     }
   });
 
+  const applySelectedHighlights = () => {
+    const idsToHighlight = new Set();
+    (selectedFratrieIds || []).forEach((idx) => {
+      const f = fratrieLabels[idx];
+      if (f) f.ids.forEach((id) => idsToHighlight.add(id));
+    });
+    resultEl.querySelectorAll('.schedule-student').forEach((span) => {
+      if (idsToHighlight.has(span.dataset.studentId)) span.classList.add('fratrie-highlight');
+      else span.classList.remove('fratrie-highlight');
+    });
+  };
+
   resultEl.querySelectorAll('.schedule-fratrie-badge').forEach((el) => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.fratrieIdx, 10);
+      setState((s) => {
+        const prev = s.selectedFratrieIds ?? [];
+        const next = prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx];
+        return { ...s, selectedFratrieIds: next };
+      });
+      render();
+    });
     el.addEventListener('mouseenter', () => {
       const ids = (el.dataset.fratrieIds || '').split(',').filter(Boolean);
       const idSet = new Set(ids);
@@ -795,9 +818,11 @@ function renderScheduleView(container, state) {
       });
     });
     el.addEventListener('mouseleave', () => {
-      resultEl.querySelectorAll('.schedule-student').forEach((span) => span.classList.remove('fratrie-highlight'));
+      applySelectedHighlights();
     });
   });
+
+  applySelectedHighlights();
 }
 
 function escapeHtml(str) {
@@ -834,6 +859,7 @@ setState((s) => ({
   ...s,
   editingClassId: s.editingClassId ?? null,
   editingStudentId: s.editingStudentId ?? null,
+  selectedFratrieIds: s.selectedFratrieIds ?? [],
 }));
 
 initRouter(() => render());
