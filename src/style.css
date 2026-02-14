@@ -32,6 +32,81 @@ body {
   padding: 1.5rem;
 }
 
+/* Landing page */
+.landing {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.landing-hero {
+  text-align: center;
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.landing-title {
+  font-size: 2.25rem;
+  margin-bottom: 1rem;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.landing-tagline {
+  font-size: 1.15rem;
+  line-height: 1.65;
+  color: var(--muted);
+  margin-bottom: 1.75rem;
+}
+.landing-tagline strong {
+  color: var(--accent);
+}
+.landing-cta {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent);
+  color: var(--surface);
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  border: none;
+  transition: filter 0.15s ease;
+}
+.landing-cta:hover {
+  filter: brightness(1.1);
+  text-decoration: none;
+}
+.landing-section {
+  padding: 2rem 0;
+}
+.landing-section h2 {
+  font-size: 1.35rem;
+  color: var(--ink);
+  margin-bottom: 1rem;
+}
+.landing-lead {
+  font-size: 1.05rem;
+  margin-bottom: 0.75rem;
+}
+.landing-steps {
+  padding-left: 1.25rem;
+  margin: 0 0 0.5rem;
+}
+.landing-steps li {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+.landing-cta-section {
+  text-align: center;
+  padding-bottom: 2rem;
+}
+.landing-cta-secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 2px solid var(--accent);
+}
+.landing-cta-secondary:hover {
+  background: var(--accent-soft);
+  filter: none;
+}
+
 h1, h2, h3 {
   font-weight: 600;
   margin: 0 0 0.75rem;

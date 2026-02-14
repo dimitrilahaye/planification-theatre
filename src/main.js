@@ -1,19 +1,30 @@
 import { getState, setState, nextId } from './store.js';
 import { createClass, createStudent, getStudentById, getClassById, parseClassesBatchFromText } from './data-model.js';
 import { assignWavesToStudents, applyWaveAssignment } from './scheduler.js';
+import { getRoute, ROUTES, initRouter } from './router.js';
+import { renderLandingPage } from './landing.js';
 
 const VIEWS = { classes: 'classes', siblings: 'siblings', schedule: 'schedule' };
 
 function render() {
+  const route = getRoute();
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  if (route === ROUTES.landing) {
+    renderLandingPage(app);
+    return;
+  }
+
+  document.title = 'Planification théâtre — Application';
   const state = getState();
   const view = state.currentView || VIEWS.classes;
   const editingClassId = state.editingClassId || null;
-  const app = document.getElementById('app');
-  if (!app) return;
 
   app.innerHTML = `
     <h1>Représentations théâtre — Planification</h1>
     <nav>
+      <a href="#/">Accueil</a>
       <a href="#" data-view="classes" data-active="${view === VIEWS.classes}">Classes</a>
       <a href="#" data-view="siblings" data-active="${view === VIEWS.siblings}">Fratries</a>
       <a href="#" data-view="schedule" data-active="${view === VIEWS.schedule}">Horaires</a>
@@ -745,4 +756,5 @@ setState((s) => ({
   currentView: s.currentView ?? VIEWS.classes,
   editingClassId: s.editingClassId ?? null,
 }));
-render();
+
+initRouter(() => render());
