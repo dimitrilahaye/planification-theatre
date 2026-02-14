@@ -2,6 +2,8 @@
 
 Application web pour organiser les représentations théâtrales de plusieurs classes (CP, CE1, CE2…) et générer un planning qui permet aux parents d’assister à la représentation de **tous leurs enfants** sans chevauchement.
 
+**[Voir l'application en ligne](https://dimitrilahaye.github.io/planification-theatre/)**
+
 ## Fonctionnalités
 
 - **Classes** : créer des classes (niveau, instituteur, liste d’élèves). Import possible au format texte (une ou plusieurs classes séparées par `---`).
@@ -46,7 +48,7 @@ Le dépôt contient une GitHub Action (`.github/workflows/deploy-pages.yml`) qui
 
 **À faire côté repo** : dans **Settings → Pages**, choisir **GitHub Actions** comme source.
 
-Le site sera accessible à : `https://<username>.github.io/<nom-du-repo>/`.
+Le site est accessible à : **https://dimitrilahaye.github.io/planification-theatre/**
 
 ## Structure du projet
 
