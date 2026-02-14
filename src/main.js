@@ -724,8 +724,28 @@ function renderScheduleView(container, state) {
             .join('')}
         </tbody>
       </table>
+      <div class="mt-2">
+        <button type="button" class="primary" id="btn-copy-schedule">Copier le planning au format texte</button>
+        <span id="copy-feedback" class="copy-feedback" style="display: none;">Copié !</span>
+      </div>
     </div>
   `;
+
+  resultEl.querySelector('#btn-copy-schedule')?.addEventListener('click', async () => {
+    const text = formatScheduleAsText(classes);
+    const feedbackEl = resultEl.querySelector('#copy-feedback');
+    try {
+      await navigator.clipboard.writeText(text);
+      feedbackEl.style.display = 'inline';
+      feedbackEl.style.marginLeft = '0.5rem';
+      feedbackEl.style.color = 'var(--success)';
+      setTimeout(() => { feedbackEl.style.display = 'none'; }, 2000);
+    } catch {
+      feedbackEl.textContent = 'Échec de la copie';
+      feedbackEl.style.display = 'inline';
+      feedbackEl.style.color = 'var(--accent)';
+    }
+  });
 
   resultEl.querySelectorAll('.schedule-fratrie-badge').forEach((el) => {
     el.addEventListener('mouseenter', () => {
@@ -753,6 +773,21 @@ function formatTimeDisplay(timeStr) {
   const t = timeStr.trim();
   if (t.includes(':')) return t.replace(':', 'h');
   return t.includes('h') ? t : t + 'h00';
+}
+
+function formatScheduleAsText(classes) {
+  const lines = [];
+  for (const c of classes) {
+    lines.push(`Niveau: ${c.niveau || ''}`);
+    lines.push(`Instit: ${c.teacherName || ''}`);
+    for (const w of ['A', 'B', 'C', 'D']) {
+      const students = c.students.filter((s) => s.wave === w).map((s) => `${s.firstName} ${s.lastName}`);
+      lines.push(`Vague ${w}:`);
+      students.forEach((name) => lines.push(`- ${name}`));
+    }
+    lines.push('');
+  }
+  return lines.join('\n').trimEnd();
 }
 
 // Init state shape if missing
