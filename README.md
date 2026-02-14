@@ -46,7 +46,11 @@ Le dépôt contient une GitHub Action (`.github/workflows/deploy-pages.yml`) qui
 - se déclenche à chaque push sur `main` (ou manuellement) ;
 - build le projet et déploie le contenu de `dist/` sur GitHub Pages.
 
-**À faire côté repo** : dans **Settings → Pages**, choisir **GitHub Actions** comme source.
+### Configuration requise
+
+**Settings → Pages → Build and deployment → Source** : sélectionner **GitHub Actions** (et non « Deploy from a branch »).
+
+> ⚠️ Si le site affiche une page blanche ou des erreurs 404 (main.js, style.css), c’est que la source est probablement sur « Deploy from a branch ». Il faut impérativement choisir **GitHub Actions**.
 
 Le site est accessible à : **https://dimitrilahaye.github.io/planification-theatre/**
 
