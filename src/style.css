@@ -323,6 +323,7 @@ ul.plain {
   border-bottom: 1px solid var(--border);
 }
 .student-row:last-child, .wave-row:last-child { border-bottom: none; }
+.student-row input { margin-bottom: 0; }
 
 .badge {
   display: inline-block;
@@ -490,6 +491,33 @@ ul.plain {
 input[type="time"] {
   font-family: inherit;
   font-size: 1rem;
+}
+
+/* Grille des classes */
+.classes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.classes-grid-card {
+  display: flex;
+  flex-direction: column;
+}
+.classes-grid-card-title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.classes-grid-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+.classes-grid-card-actions button {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
 }
 
 .empty-state {

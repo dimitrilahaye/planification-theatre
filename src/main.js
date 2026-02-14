@@ -20,6 +20,7 @@ function render() {
   const state = getState();
   const editingClassId = state.editingClassId || null;
   const editingClassIds = state.editingClassIds ?? [];
+  const editingStudentId = state.editingStudentId ?? null;
 
   const titles = {
     [ROUTES.classes]: 'Classes',
@@ -36,12 +37,12 @@ function render() {
   renderAppHeader(app.querySelector('#app-header'), route);
 
   const main = document.getElementById('main-content');
-  if (route === ROUTES.classes) renderClassesView(main, state, editingClassId, editingClassIds);
+  if (route === ROUTES.classes) renderClassesView(main, state, editingClassId, editingClassIds, editingStudentId);
   else if (route === ROUTES.siblings) renderSiblingsView(main, state);
   else if (route === ROUTES.schedule) renderScheduleView(main, state);
 }
 
-function renderClassesView(container, state, editingClassId, editingClassIds) {
+function renderClassesView(container, state, editingClassId, editingClassIds, editingStudentId = null) {
   const { classes } = state;
 
   // Plusieurs classes en vérification après import (Enregistrer = toast à la place du bloc, puis disparition après 2s)
@@ -56,7 +57,7 @@ function renderClassesView(container, state, editingClassId, editingClassIds) {
           return `<div class="class-editor-block class-toast card" data-class-id="${id}"><p class="toast-message">Classe enregistrée</p></div>`;
         }
         const cls = getClassById(classes, id);
-        return cls ? renderClassEditorBlock(cls, true) : '';
+        return cls ? renderClassEditorBlock(cls, true, editingStudentId) : '';
       })
       .join('');
     idsToShow.forEach((id) => {
@@ -64,7 +65,7 @@ function renderClassesView(container, state, editingClassId, editingClassIds) {
       const cls = getClassById(classes, id);
       if (cls) {
         const block = blocksContainer.querySelector(`.class-editor-block[data-class-id="${id}"]:not(.class-toast)`);
-        if (block) bindClassEditor(block, cls, true);
+        if (block) bindClassEditor(block, cls, true, editingStudentId);
       }
     });
     return;
@@ -74,8 +75,8 @@ function renderClassesView(container, state, editingClassId, editingClassIds) {
   if (editingClassId) {
     const cls = getClassById(classes, editingClassId);
     if (cls) {
-      container.innerHTML = renderClassEditorBlock(cls, false);
-      bindClassEditor(container.querySelector('.class-editor-block'), cls, false);
+      container.innerHTML = renderClassEditorBlock(cls, false, editingStudentId);
+      bindClassEditor(container.querySelector('.class-editor-block'), cls, false, editingStudentId);
       return;
     }
   }
@@ -96,7 +97,7 @@ function renderClassesView(container, state, editingClassId, editingClassIds) {
         <p id="import-class-error" class="import-error" style="display: none; color: var(--accent); margin-top: 0.5rem;"></p>
       </div>
     </div>
-    <div id="classes-list"></div>
+    <div id="classes-list" class="classes-grid"></div>
   `;
 
   container.querySelector('#btn-toggle-import').addEventListener('click', () => {
@@ -157,16 +158,12 @@ function renderClassesView(container, state, editingClassId, editingClassIds) {
   listEl.innerHTML = classes
     .map(
       (c) => `
-    <div class="card" data-class-id="${c.id}">
-      <div class="flex align-center wrap gap-2" style="justify-content: space-between;">
-        <div>
-          <h3 class="mb-0">${escapeHtml(c.niveau || 'Sans nom')} — ${escapeHtml(c.teacherName || 'Sans instit')}</h3>
-          <p class="muted mb-0" style="font-size: 0.9rem;">${c.students.length} élève(s) · Vagues: ${[...new Set(c.students.filter((s) => s.wave).map((s) => s.wave))].sort().join(', ') || '—'}</p>
-        </div>
-        <div class="flex gap-1">
-          <button type="button" class="edit-class" data-id="${c.id}">Modifier</button>
-          <button type="button" class="delete-class danger" data-id="${c.id}">Supprimer</button>
-        </div>
+    <div class="card classes-grid-card" data-class-id="${c.id}">
+      <h3 class="classes-grid-card-title">${escapeHtml(c.niveau || 'Sans nom')} - ${escapeHtml(c.teacherName || 'Sans instit')}</h3>
+      <p class="muted mb-2" style="font-size: 0.9rem;">${c.students.length} élève(s)</p>
+      <div class="classes-grid-card-actions">
+        <button type="button" class="edit-class" data-id="${c.id}">Modifier</button>
+        <button type="button" class="delete-class danger" data-id="${c.id}">Supprimer</button>
       </div>
     </div>
   `
@@ -199,15 +196,29 @@ function renderClassesView(container, state, editingClassId, editingClassIds) {
   });
 }
 
-function renderClassEditorBlock(cls, isMulti) {
+function renderClassEditorBlock(cls, isMulti, editingStudentId = null) {
   const studentsList = cls.students
     .map(
-      (s) => `
+      (s) => {
+        const isEditing = s.id === editingStudentId;
+        if (isEditing) {
+          return `
+    <div class="student-row student-row-edit flex align-center gap-2" data-student-id="${s.id}">
+      <input type="text" class="edit-student-lastname" value="${escapeHtml(s.lastName)}" placeholder="Nom" style="max-width: 120px;" />
+      <input type="text" class="edit-student-firstname" value="${escapeHtml(s.firstName)}" placeholder="Prénom" style="max-width: 120px;" />
+      <button type="button" class="primary btn-save-student" data-id="${s.id}">Valider</button>
+      <button type="button" class="btn-cancel-edit-student" data-id="${s.id}">Annuler</button>
+    </div>
+  `;
+        }
+        return `
     <div class="student-row flex align-center gap-2" data-student-id="${s.id}">
       <span>${escapeHtml(s.lastName)} ${escapeHtml(s.firstName)}</span>
+      <button type="button" class="edit-student" data-id="${s.id}">Modifier</button>
       <button type="button" class="remove-student" data-id="${s.id}">Retirer</button>
     </div>
-  `
+  `;
+      }
     )
     .join('');
 
@@ -243,7 +254,7 @@ function renderClassEditorBlock(cls, isMulti) {
   `;
 }
 
-function bindClassEditor(block, cls, isMulti) {
+function bindClassEditor(block, cls, isMulti, editingStudentId = null) {
   if (!block) return;
   block.querySelector('.btn-save-class')?.addEventListener('click', () => {
     const niveau = block.querySelector('.input-niveau').value.trim();
@@ -274,7 +285,7 @@ function bindClassEditor(block, cls, isMulti) {
   });
 
   block.querySelector('.btn-cancel-edit')?.addEventListener('click', () => {
-    setState((s) => ({ ...s, editingClassId: null }));
+    setState((s) => ({ ...s, editingClassId: null, editingStudentId: null }));
     render();
   });
 
@@ -303,11 +314,50 @@ function bindClassEditor(block, cls, isMulti) {
           c.id === cls.id ? { ...c, students: c.students.filter((st) => st.id !== id) } : c
         ),
         siblingGroups: s.siblingGroups.map((g) => g.filter((sid) => sid !== id)).filter((g) => g.length >= 2),
+        editingStudentId: s.editingStudentId === id ? null : s.editingStudentId,
       }));
       render();
     });
   });
 
+  block.querySelectorAll('.edit-student').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setState((s) => ({ ...s, editingStudentId: btn.dataset.id }));
+      render();
+    });
+  });
+
+  block.querySelectorAll('.btn-save-student').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.student-row-edit');
+      if (!row) return;
+      const id = btn.dataset.id;
+      const lastName = row.querySelector('.edit-student-lastname')?.value?.trim() ?? '';
+      const firstName = row.querySelector('.edit-student-firstname')?.value?.trim() ?? '';
+      setState((s) => ({
+        ...s,
+        classes: s.classes.map((c) =>
+          c.id === cls.id
+            ? {
+                ...c,
+                students: c.students.map((st) =>
+                  st.id === id ? { ...st, lastName, firstName } : st
+                ),
+              }
+            : c
+        ),
+        editingStudentId: null,
+      }));
+      render();
+    });
+  });
+
+  block.querySelectorAll('.btn-cancel-edit-student').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setState((s) => ({ ...s, editingStudentId: null }));
+      render();
+    });
+  });
 }
 
 /** Extrait l'ensemble des mots du nom de famille (minuscules). */
@@ -783,6 +833,7 @@ function formatScheduleAsText(classes) {
 setState((s) => ({
   ...s,
   editingClassId: s.editingClassId ?? null,
+  editingStudentId: s.editingStudentId ?? null,
 }));
 
 initRouter(() => render());
