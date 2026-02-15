@@ -416,6 +416,17 @@ function getFamilyLabel(students) {
   return first || 'Famille';
 }
 
+function filterStudentsBySearch(allStudents, query, excludeIds = new Set()) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q) return [];
+  return allStudents.filter((s) => {
+    if (excludeIds.has(s.id)) return false;
+    const last = (s.lastName || '').toLowerCase();
+    const first = (s.firstName || '').toLowerCase();
+    return last.includes(q) || first.includes(q);
+  });
+}
+
 function renderSiblingsView(container, state) {
   const { classes, siblingGroups, selectedStudentIds = [] } = state;
   const selectedSet = new Set(selectedStudentIds);
@@ -437,11 +448,13 @@ function renderSiblingsView(container, state) {
     return proposalIds.every((id) => set.has(id));
   };
 
-  const proposalsCardHtml = hasProposed
+  const selectedStudentsForManual = allStudents.filter((s) => selectedSet.has(s.id));
+
+  const proposalsColHtml = hasProposed
     ? `
     <div class="card siblings-section-card">
       <h3>Propositions de fratries</h3>
-      <p class="muted mb-2">Fratries proposées par nom de famille (au moins un mot en commun, ex. Martin, Martin Dubois, Dubois Martin, Lefebvre Martin Dubois). Validez en un clic.</p>
+      <p class="muted mb-2">Fratries proposées par nom de famille (au moins un mot en commun). Validez en un clic.</p>
       <div class="siblings-proposal-blocks">
         ${proposedFamilies
           .map(
@@ -454,7 +467,7 @@ function renderSiblingsView(container, state) {
             <div class="siblings-block-list">
               ${students.map((s) => `<span class="sibling-name-pill">${escapeHtml(s.lastName)} ${escapeHtml(s.firstName)} — ${escapeHtml(s.niveau)}, ${escapeHtml(s.teacherName)}</span>`).join('')}
             </div>
-            ${alreadyAccepted ? '<p class="siblings-proposal-accepted mt-1">Déjà enregistrée</p>' : `<button type="button" class="primary btn-save-block-sibling mt-1" data-ids="${studentIds.join(',')}">Enregistrer cette proposition de fratrie</button>`}
+            ${alreadyAccepted ? '<p class="siblings-proposal-accepted mt-1">Déjà enregistrée</p>' : `<button type="button" class="primary btn-save-block-sibling mt-1" data-ids="${studentIds.join(',')}">Enregistrer</button>`}
           </div>`;
             }
           )
@@ -462,51 +475,40 @@ function renderSiblingsView(container, state) {
       </div>
     </div>
   `
-    : '';
+    : '<div class="card siblings-section-card"><h3>Propositions de fratries</h3><p class="muted">Aucune proposition (créez des classes et des élèves).</p></div>';
 
-  const classBlocks = classes.filter((c) => c.students.length > 0);
-  const manualCardHtml = `
+  const manualColHtml = `
     <div class="card siblings-section-card">
-      <h3>Création manuelle de fratries</h3>
-      <p class="muted mb-2">Sélectionnez des enfants dans les classes ci-dessous (quadrillage), puis enregistrez une fratrie.</p>
-      ${classBlocks.length === 0 ? '<p class="empty-state">Aucun élève. Créez des classes et des élèves d\'abord.</p>' : `
-      <div class="siblings-classes-grid">
-        ${classBlocks
-          .map(
-            (c) => `
-          <div class="siblings-class-cell">
-            <h4 class="siblings-block-header">${escapeHtml(c.niveau)}, ${escapeHtml(c.teacherName)}</h4>
-            <div class="siblings-block-list">
-              ${c.students
-                .map(
-                  (s) => {
-                    const sel = selectedSet.has(s.id);
-                    return `<button type="button" class="sibling-student-row ${sel ? 'selected' : ''}" data-student-id="${s.id}">${escapeHtml(s.lastName)} ${escapeHtml(s.firstName)}</button>`;
-                  }
-                )
-                .join('')}
-            </div>
-          </div>`
-          )
-          .join('')}
+      <h3>Création manuelle</h3>
+      <p class="muted mb-2">Recherchez des élèves par nom ou prénom, ajoutez-les à la fratrie temporaire puis validez.</p>
+      ${allStudents.length === 0 ? '<p class="empty-state">Aucun élève. Créez des classes et des élèves d\'abord.</p>' : `
+      <div class="manual-search-wrap">
+        <input type="text" id="manual-search-input" class="manual-search-input" placeholder="Rechercher un élève (nom ou prénom)..." autocomplete="off" />
+        <div id="manual-search-suggestions" class="manual-search-suggestions" style="display: none;"></div>
       </div>
-      <button type="button" class="primary mt-2" id="btn-save-sibling-group" ${(selectedStudentIds || []).length < 2 ? 'disabled' : ''}>Enregistrer la fratrie</button>
+      ${selectedStudentsForManual.length > 0 ? `
+      <div class="siblings-proposal-block manual-temp-fratrie mt-2">
+        <h4 class="siblings-block-header">Fratrie en cours</h4>
+        <div class="siblings-block-list">
+          ${selectedStudentsForManual.map((s) => `<span class="sibling-name-pill manual-pill-remove" data-student-id="${s.id}">${escapeHtml(s.lastName)} ${escapeHtml(s.firstName)} — ${escapeHtml(s.niveau)}, ${escapeHtml(s.teacherName)} ×</span>`).join('')}
+        </div>
+        <button type="button" class="primary btn-save-sibling-group mt-1" ${selectedStudentsForManual.length < 2 ? 'disabled' : ''}>Valider cette fratrie</button>
+      </div>
+      ` : ''}
       `}
     </div>
   `;
 
   container.innerHTML = `
-    <div class="siblings-page-layout">
-      <div class="siblings-left-col">
-        <div class="card" style="margin-bottom: 0;">
-          <h2>Fratries</h2>
-          <p class="muted mb-2">Reliez les enfants d'une même famille pour que les horaires soient générés sans chevauchement.</p>
-        </div>
-        ${proposalsCardHtml}
-        ${manualCardHtml}
-      </div>
-      <div class="siblings-right-col">
-        <div class="card">
+    <div class="card" style="margin-bottom: 1rem;">
+      <h2>Fratries</h2>
+      <p class="muted mb-0">Reliez les enfants d'une même famille pour que les horaires soient générés sans chevauchement.</p>
+    </div>
+    <div class="siblings-top-row">
+      <div class="siblings-col-left">${proposalsColHtml}</div>
+      <div class="siblings-col-right">
+        ${manualColHtml}
+        <div class="card siblings-bottom-section mt-2">
           <h3>Fratries enregistrées</h3>
           <div id="sibling-groups-list"></div>
         </div>
@@ -514,16 +516,57 @@ function renderSiblingsView(container, state) {
     </div>
   `;
 
-  container.querySelectorAll('.sibling-student-row').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.studentId;
-      setState((s) => {
-        const prev = s.selectedStudentIds ?? [];
-        const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
-        return { ...s, selectedStudentIds: next };
+  // Recherche manuelle : suggestions dynamiques
+  const searchInput = container.querySelector('#manual-search-input');
+  const suggestionsEl = container.querySelector('#manual-search-suggestions');
+  if (searchInput && suggestionsEl && allStudents.length > 0) {
+    searchInput.addEventListener('input', () => {
+      const matches = filterStudentsBySearch(allStudents, searchInput.value, selectedSet);
+      if (matches.length === 0) {
+        suggestionsEl.style.display = 'none';
+        suggestionsEl.innerHTML = '';
+        return;
+      }
+      suggestionsEl.innerHTML = matches
+        .slice(0, 12)
+        .map(
+          (s) =>
+            `<button type="button" class="manual-search-item" data-student-id="${s.id}"><strong>${escapeHtml(s.lastName)} ${escapeHtml(s.firstName)}</strong> (${escapeHtml(s.niveau)}, ${escapeHtml(s.teacherName)})</button>`
+        )
+        .join('');
+      suggestionsEl.style.display = 'block';
+      suggestionsEl.querySelectorAll('.manual-search-item').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.studentId;
+          setState((s) => ({ ...s, selectedStudentIds: [...(s.selectedStudentIds ?? []), id] }));
+          searchInput.value = '';
+          suggestionsEl.style.display = 'none';
+          render();
+        });
       });
+    });
+    searchInput.addEventListener('blur', () => {
+      setTimeout(() => { suggestionsEl.style.display = 'none'; }, 150);
+    });
+  }
+
+  container.querySelectorAll('.manual-pill-remove').forEach((span) => {
+    span.addEventListener('click', () => {
+      const id = span.dataset.studentId;
+      setState((s) => ({ ...s, selectedStudentIds: (s.selectedStudentIds ?? []).filter((x) => x !== id) }));
       render();
     });
+  });
+
+  container.querySelector('.btn-save-sibling-group')?.addEventListener('click', () => {
+    const ids = selectedStudentIds || [];
+    if (ids.length < 2) return;
+    setState((s) => ({
+      ...s,
+      siblingGroups: [...s.siblingGroups, ids],
+      selectedStudentIds: [],
+    }));
+    render();
   });
 
   container.querySelectorAll('.btn-save-block-sibling').forEach((btn) => {
