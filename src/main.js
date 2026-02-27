@@ -85,9 +85,10 @@ function renderClassesView(container, state, editingClassId, editingClassIds, ed
     <div class="card">
       <h2>Classes</h2>
       <p class="muted mb-2">Créez les classes (niveau, instituteur, liste d'élèves). Les vagues seront attribuées automatiquement lors du planning.</p>
-      <div class="flex gap-1 mb-2">
+      <div class="flex gap-1 mb-2 flex-wrap">
         <button type="button" class="primary" id="btn-new-class">Nouvelle classe</button>
         <button type="button" id="btn-toggle-import">Importer une ou plusieurs classes (texte)</button>
+        <button type="button" id="btn-copy-classes-import" ${classes.length === 0 ? 'disabled' : ''}>Copier les classes (format import)</button>
       </div>
       <div id="import-class-block" class="import-block" style="display: none;">
         <label for="import-class-text">Collez une ou plusieurs classes (séparez les classes par <code>---</code> sur une ligne)</label>
@@ -147,6 +148,20 @@ function renderClassesView(container, state, editingClassId, editingClassIds, ed
       editingClassId: newClass.id,
     }));
     render();
+  });
+
+  container.querySelector('#btn-copy-classes-import')?.addEventListener('click', async () => {
+    const state = getState();
+    const text = formatClassesForImport(state.classes || []);
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = container.querySelector('#btn-copy-classes-import');
+      if (btn) { const l = btn.textContent; btn.textContent = 'Copié !'; setTimeout(() => { btn.textContent = l; }, 2000); }
+    } catch {
+      const btn = container.querySelector('#btn-copy-classes-import');
+      if (btn) btn.textContent = 'Échec de la copie';
+    }
   });
 
   const listEl = container.querySelector('#classes-list');
@@ -603,7 +618,7 @@ function renderSiblingsView(container, state) {
             .map((sid) => {
               const found = getStudentById(classes, sid);
               if (!found) return null;
-              return `${found.student.lastName} ${found.student.firstName} (${found.class.niveau})`;
+              return `${found.student.lastName} ${found.student.firstName} (${found.class.niveau}, ${found.class.teacherName})`;
             })
             .filter(Boolean);
           return `
@@ -811,26 +826,13 @@ function renderScheduleView(container, state) {
         </tbody>
       </table>
       <div class="mt-2">
-        <button type="button" class="primary" id="btn-copy-schedule">Copier le planning au format texte</button>
-        <span id="copy-feedback" class="copy-feedback" style="display: none;">Copié !</span>
+        <button type="button" class="primary" id="btn-download-pdf">Télécharger le récapitulatif (PDF)</button>
       </div>
     </div>
   `;
 
-  resultEl.querySelector('#btn-copy-schedule')?.addEventListener('click', async () => {
-    const text = formatScheduleAsText(classes);
-    const feedbackEl = resultEl.querySelector('#copy-feedback');
-    try {
-      await navigator.clipboard.writeText(text);
-      feedbackEl.style.display = 'inline';
-      feedbackEl.style.marginLeft = '0.5rem';
-      feedbackEl.style.color = 'var(--success)';
-      setTimeout(() => { feedbackEl.style.display = 'none'; }, 2000);
-    } catch {
-      feedbackEl.textContent = 'Échec de la copie';
-      feedbackEl.style.display = 'inline';
-      feedbackEl.style.color = 'var(--accent)';
-    }
+  resultEl.querySelector('#btn-download-pdf')?.addEventListener('click', () => {
+    openPrintRecap(classes, siblingGroups, wt);
   });
 
   const applySelectedHighlights = () => {
@@ -884,6 +886,17 @@ function formatTimeDisplay(timeStr) {
   return t.includes('h') ? t : t + 'h00';
 }
 
+/** Format texte pour ré-import des classes (niveau:, instituteur:, Élèves:, - Nom Prénom, séparateur ---). */
+function formatClassesForImport(classes) {
+  if (!classes || classes.length === 0) return '';
+  return classes
+    .map(
+      (c) =>
+        `niveau: ${c.niveau || ''}\ninstituteur: ${c.teacherName || ''}\nÉlèves:\n${(c.students || []).map((s) => `- ${s.lastName} ${s.firstName}`).join('\n')}`
+    )
+    .join('\n---\n');
+}
+
 function formatScheduleAsText(classes) {
   const lines = [];
   for (const c of classes) {
@@ -897,6 +910,108 @@ function formatScheduleAsText(classes) {
     lines.push('');
   }
   return lines.join('\n').trimEnd();
+}
+
+/** Ouvre une fenêtre d'impression avec le récapitulatif (classes, fratries, planning). L'utilisateur peut imprimer → Enregistrer au format PDF. */
+function openPrintRecap(classes, siblingGroups, waveTimes) {
+  const wt = waveTimes || {};
+  const formatTime = (t) => (!t || !t.trim() ? '' : t.trim().includes(':') ? t.trim().replace(':', 'h') : t.trim() + 'h00');
+
+  let scheduleRows = '';
+  const byWave = (c) => {
+    const w = { A: [], B: [], C: [], D: [] };
+    c.students.forEach((s) => { if (s.wave && w[s.wave]) w[s.wave].push(s); });
+    return w;
+  };
+  classes.forEach((c) => {
+    const w = byWave(c);
+    const cell = (arr) => arr.length ? arr.map((s) => `${s.lastName} ${s.firstName}`).join(', ') : '—';
+    scheduleRows += `<tr><td><strong>${escapeHtml(c.niveau)}</strong> — ${escapeHtml(c.teacherName)}</td><td>${escapeHtml(cell(w.A))}</td><td>${escapeHtml(cell(w.B))}</td><td>${escapeHtml(cell(w.C))}</td><td>${escapeHtml(cell(w.D))}</td></tr>`;
+  });
+
+  const classesBlocks = classes
+    .map(
+      (c) => `
+      <div class="recap-block">
+        <h4>${escapeHtml(c.niveau || 'Sans nom')} — ${escapeHtml(c.teacherName || '')}</h4>
+        <p><strong>Élèves :</strong> ${c.students.map((s) => `${s.lastName} ${s.firstName}`).join(', ')}</p>
+      </div>`
+    )
+    .join('');
+
+  const classesSection = classesBlocks;
+
+  const fratriesSection =
+    (siblingGroups || []).length === 0
+      ? '<p>Aucune fratrie enregistrée.</p>'
+      : (siblingGroups || [])
+          .map((group) => {
+            const names = group
+              .map((sid) => {
+                const found = getStudentById(classes, sid);
+                return found ? `${found.student.lastName} ${found.student.firstName} (${found.class.niveau}, ${found.class.teacherName})` : null;
+              })
+              .filter(Boolean);
+            return `<div class="recap-block"><p><strong>Fratrie :</strong> ${names.join(', ')}</p></div>`;
+          })
+          .join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Récapitulatif — Planification théâtre</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 1.5rem; color: #1c1916; line-height: 1.5; }
+    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid #e0d9d2; padding-bottom: 0.25rem; }
+    h4 { font-size: 1rem; margin: 0 0 0.25rem; }
+    .recap-block { margin-bottom: 1rem; padding: 0.75rem; background: #f5f0eb; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    th, td { border: 1px solid #e0d9d2; padding: 0.4rem 0.6rem; text-align: left; font-size: 0.9rem; }
+    th { background: #f5f0eb; font-weight: 600; }
+    .print-hint { font-size: 0.85rem; color: #6b6560; margin-bottom: 1rem; }
+    .section-break { page-break-before: always; }
+    @media print { body { padding: 0.5rem; } .print-hint { display: none; } }
+  </style>
+</head>
+<body>
+  <p class="print-hint">Utilisez Ctrl+P (ou Cmd+P) puis « Enregistrer au format PDF » pour télécharger ce récapitulatif en PDF.</p>
+  <h1>Planification théâtre — Récapitulatif</h1>
+
+  <h2>1. Classes</h2>
+  ${classesSection}
+
+  <h2 class="section-break">2. Fratries</h2>
+  ${fratriesSection}
+
+  <h2 class="section-break">3. Planning par classe</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Classe</th>
+        <th>Vague A ${wt.A?.start && wt.A?.end ? `(${formatTime(wt.A.start)} – ${formatTime(wt.A.end)})` : ''}</th>
+        <th>Vague B ${wt.B?.start && wt.B?.end ? `(${formatTime(wt.B.start)} – ${formatTime(wt.B.end)})` : ''}</th>
+        <th>Vague C ${wt.C?.start && wt.C?.end ? `(${formatTime(wt.C.start)} – ${formatTime(wt.C.end)})` : ''}</th>
+        <th>Vague D ${wt.D?.start && wt.D?.end ? `(${formatTime(wt.D.start)} – ${formatTime(wt.D.end)})` : ''}</th>
+      </tr>
+    </thead>
+    <tbody>${scheduleRows}</tbody>
+  </table>
+</body>
+</html>`;
+
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('style', 'position:fixed;width:0;height:0;border:0;visibility:hidden');
+  document.body.appendChild(iframe);
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  setTimeout(() => {
+    iframe.contentWindow.print();
+    setTimeout(() => document.body.removeChild(iframe), 500);
+  }, 300);
 }
 
 // Init state shape if missing
