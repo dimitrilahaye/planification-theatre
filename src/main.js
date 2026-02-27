@@ -49,7 +49,15 @@ function renderClassesView(container, state, editingClassId, editingClassIds, ed
   if (editingClassIds.length > 0) {
     const toastClassIds = state.toastClassIds ?? [];
     const idsToShow = editingClassIds.filter((id) => getClassById(classes, id));
-    container.innerHTML = `<div id="multi-edit-blocks"></div>`;
+    const idsNotToast = idsToShow.filter((id) => !toastClassIds.includes(id));
+    container.innerHTML = `
+      <div class="multi-edit-actions multi-edit-actions-top">
+        <button type="button" class="primary" id="btn-save-all-classes">Enregistrer toutes les classes</button>
+      </div>
+      <div id="multi-edit-blocks"></div>
+      <div class="multi-edit-actions multi-edit-actions-bottom">
+        <button type="button" class="primary" id="btn-save-all-classes-bottom">Enregistrer toutes les classes</button>
+      </div>`;
     const blocksContainer = container.querySelector('#multi-edit-blocks');
     blocksContainer.innerHTML = idsToShow
       .map((id) => {
@@ -68,6 +76,31 @@ function renderClassesView(container, state, editingClassId, editingClassIds, ed
         if (block) bindClassEditor(block, cls, true, editingStudentId);
       }
     });
+
+    const saveAllClasses = () => {
+      const updates = {};
+      idsNotToast.forEach((classId) => {
+        const block = blocksContainer.querySelector(`.class-editor-block[data-class-id="${classId}"]:not(.class-toast)`);
+        if (!block) return;
+        const niveau = block.querySelector('.input-niveau')?.value?.trim() ?? '';
+        const teacherName = block.querySelector('.input-teacher')?.value?.trim() ?? '';
+        updates[classId] = { niveau, teacherName };
+      });
+      setState((s) => {
+        const nextClasses = s.classes.map((c) =>
+          updates[c.id] ? { ...c, niveau: updates[c.id].niveau, teacherName: updates[c.id].teacherName } : c
+        );
+        return {
+          ...s,
+          classes: nextClasses,
+          editingClassIds: [],
+          toastClassIds: [],
+        };
+      });
+      render();
+    };
+    container.querySelector('#btn-save-all-classes')?.addEventListener('click', saveAllClasses);
+    container.querySelector('#btn-save-all-classes-bottom')?.addEventListener('click', saveAllClasses);
     return;
   }
 

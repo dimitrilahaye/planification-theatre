@@ -610,6 +610,9 @@ input[type="time"] {
   margin-bottom: 0.5rem;
 }
 
+.multi-edit-actions { margin-bottom: 1rem; }
+.multi-edit-actions-bottom { margin-top: 1rem; margin-bottom: 0; }
+
 #multi-edit-blocks .class-editor-block {
   margin-bottom: 1.25rem;
 }
